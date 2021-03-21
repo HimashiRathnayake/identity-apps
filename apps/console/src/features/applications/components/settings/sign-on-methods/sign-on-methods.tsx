@@ -24,7 +24,7 @@ import { EmphasizedSegment, Heading, Hint, LinkButton, PrimaryButton } from "@ws
 import React, { FunctionComponent, ReactElement, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
-import { Divider, Grid, Icon } from "semantic-ui-react";
+import { Divider, Grid, Icon, Label } from "semantic-ui-react";
 import { ScriptBasedFlow } from "./script-based-flow";
 import { StepBasedFlow } from "./step-based-flow";
 import { AppState, ConfigReducerStateInterface, FeatureConfigInterface } from "../../../../core";
@@ -34,6 +34,7 @@ import {
     AuthenticationSequenceInterface,
     AuthenticationStepInterface
 } from "../../../models";
+import {ConfirmationModal} from "../../../../../../../../modules/react-components/src";
 
 /**
  * Proptypes for the sign on methods component.
@@ -95,6 +96,7 @@ export const SignOnMethods: FunctionComponent<SignOnMethodsPropsInterface> = (
     const [ steps, setSteps ] = useState<number>(1);
     const [ isDefaultScript, setIsDefaultScript ] = useState<boolean>(true);
     const [ showAdvancedFlows, setShowAdvancedFlows ] = useState<boolean>(false);
+    const [ AddConfirm, setAddConfirm ] = useState<boolean>(false);
 
     const allowedScopes: string = useSelector((state: AppState) => state?.auth?.scope);
 
@@ -342,6 +344,79 @@ export const SignOnMethods: FunctionComponent<SignOnMethodsPropsInterface> = (
         );
     };
 
+    const openAuthenticationFlowDesigner = (): void => {
+        window.open(`http://localhost:3000?appId=${appId}&callbackUrl=${window.location}`, '_self','noopener');
+    };
+
+    const handleTryNow = (): void => {
+        setAddConfirm(true);
+    };
+
+    const closeAddConfirmation = (): void => {
+        setAddConfirm(false);
+    }
+
+    const showAuthenticationFlowDesigner: ReactElement = (
+        <>
+            <Heading as="h4">
+                Authentication Flow Composer
+                <Label
+                    color="teal"
+                    style={{
+                        padding: "3px 6px",
+                        marginLeft: "6px",
+                        fontSize: "0.6em",
+                        fontWeight: 600
+                    }}
+                    size="mini"
+                    data-testid={ `${ testId }-version` }
+                >
+                    BETA
+                </Label>
+            </Heading>
+            <Hint>A UI based tool where you can design and configure the authentication flow by simply adding steps and conditions</Hint>
+            <PrimaryButton
+                onClick={ handleTryNow }
+                data-testid={ `${ testId }-update-button` }
+            >
+                Try Now
+            </PrimaryButton>
+        </>
+    );
+
+    const showAddConfirmation = (): ReactElement => (
+        <ConfirmationModal
+            onClose={ closeAddConfirmation }
+            type="warning"
+            open={ AddConfirm }
+            primaryAction={ t("common:confirm") }
+            secondaryAction={ t("common:cancel") }
+            onSecondaryActionClick={ closeAddConfirmation }
+            onPrimaryActionClick={ openAuthenticationFlowDesigner }
+            data-testid={ `${ testId }-add-social-login-confirmation-modal` }
+            closeOnDimmerClick={ false }
+        >
+            <ConfirmationModal.Header
+                data-testid={ `${ testId }-delete-confirmation-modal-header` }
+            >
+                Confirm Your Action
+            </ConfirmationModal.Header>
+            <ConfirmationModal.Message
+                attached
+                warning
+                data-testid={ `${ testId }-delete-confirmation-modal-message` }
+            >
+                This action is irreversible.
+            </ConfirmationModal.Message>
+            <ConfirmationModal.Content
+                data-testid={ `${ testId }-delete-confirmation-modal-content` }
+            >
+                To open Authentication Flow Designer we will need to route you to a different page and any unsaved
+                changes in this page will be lost. Please confirm.
+            </ConfirmationModal.Content>
+        </ConfirmationModal>
+    );
+
     return (
         <EmphasizedSegment className="sign-on-methods-tab-content" padded="very">
             <StepBasedFlow
@@ -392,6 +467,8 @@ export const SignOnMethods: FunctionComponent<SignOnMethodsPropsInterface> = (
                         : requestPathAuthenticators && showRequestPathAuthenticators
                 }
                 { renderUpdateButton() }
+                { AddConfirm && showAddConfirmation() }
+                {showAuthenticationFlowDesigner}
             </div>
         </EmphasizedSegment>
     );
